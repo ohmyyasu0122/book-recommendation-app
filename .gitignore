@@ -1,0 +1,20 @@
+# Firebase秘密鍵
+firebase_config.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# 環境変数
+.env
+
+# macOS
+.DS_Store
