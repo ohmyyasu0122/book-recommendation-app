@@ -5,15 +5,39 @@ import streamlit as st
 import os
 from dotenv import load_dotenv
 
-# 環境変数を読み込み
 load_dotenv()
 
 def extract_text_from_image(image):
-    """画像からテキストを抽出"""
+    """画像からテキストを抽出（改善版）"""
     try:
-        # Tesseract OCRでテキスト抽出(日本語+英語対応)
-        text = pytesseract.image_to_string(image, lang='jpn+eng')
-        return text.strip()
+        # 画像の前処理
+        # グレースケール化
+        image = image.convert('L')
+        
+        # コントラスト強化
+        from PIL import ImageEnhance
+        enhancer = ImageEnhance.Contrast(image)
+        image = enhancer.enhance(2.0)
+        
+        # Tesseract OCRでテキスト抽出
+        # 縦書き対応のため、複数の設定を試す
+        configs = [
+            '--psm 6',  # 単一ブロック
+            '--psm 11', # 疎なテキスト
+            '--psm 12', # 疎なテキスト（OSD付き）
+        ]
+        
+        texts = []
+        for config in configs:
+            text = pytesseract.image_to_string(image, lang='jpn+eng', config=config)
+            if text.strip():
+                texts.append(text.strip())
+        
+        # 最も長いテキストを採用
+        if texts:
+            return max(texts, key=len)
+        
+        return ""
     except Exception as e:
         st.error(f"テキスト抽出エラー: {e}")
         return ""
@@ -21,18 +45,33 @@ def extract_text_from_image(image):
 def search_book_by_title(query):
     """Google Books APIで書籍を検索"""
     api_key = os.getenv('GOOGLE_BOOKS_API_KEY')
+    
+    # クエリをクリーンアップ
+    query = query.replace('\n', ' ').strip()
+    
+    # 短すぎる場合はエラー
+    if len(query) < 2:
+        return []
+    
     base_url = "https://www.googleapis.com/books/v1/volumes"
     params = {
         'q': query,
         'maxResults': 5,
-        'langRestrict': 'ja'
+        'langRestrict': 'ja',
+        'printType': 'books'
     }
     
     if api_key:
         params['key'] = api_key
     
     try:
-        response = requests.get(base_url, params=params)
+        response = requests.get(base_url, params=params, timeout=10)
+        
+        # ステータスコードを確認
+        if response.status_code == 403:
+            st.error("Google Books APIのアクセスが制限されています。APIキーの設定を確認してください。")
+            return []
+        
         response.raise_for_status()
         data = response.json()
         
@@ -54,6 +93,9 @@ def search_book_by_title(query):
         
         return books
     
+    except requests.exceptions.Timeout:
+        st.error("API接続がタイムアウトしました")
+        return []
     except Exception as e:
         st.error(f"API検索エラー: {e}")
         return []
