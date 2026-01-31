@@ -1,4 +1,3 @@
-cat > app.py << 'EOF'
 import streamlit as st
 from datetime import datetime
 from PIL import Image
@@ -238,4 +237,3 @@ def recommendation_page():
 
 if __name__ == "__main__":
     main()
-EOF
