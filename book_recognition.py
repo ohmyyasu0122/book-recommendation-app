@@ -1,8 +1,31 @@
 from google.cloud import vision
+from google.oauth2 import service_account
 import io
 from PIL import Image
 from typing import Tuple, List, Dict
 import requests
+import streamlit as st
+import os
+
+def get_vision_client():
+    """Vision APIクライアントを取得（Streamlit Cloud対応）"""
+    try:
+        # Streamlit Cloudの場合
+        if 'gcp_service_account' in st.secrets:
+            credentials = service_account.Credentials.from_service_account_info(
+                st.secrets["gcp_service_account"]
+            )
+            return vision.ImageAnnotatorClient(credentials=credentials)
+        
+        # ローカル環境の場合
+        elif os.environ.get('GOOGLE_APPLICATION_CREDENTIALS'):
+            return vision.ImageAnnotatorClient()
+        
+        else:
+            raise Exception("Google Cloud認証情報が設定されていません")
+            
+    except Exception as e:
+        raise Exception(f"Vision APIクライアントの初期化に失敗: {str(e)}")
 
 def recognize_book_from_image(image: Image.Image) -> Tuple[List[Dict], str]:
     """
@@ -15,8 +38,8 @@ def recognize_book_from_image(image: Image.Image) -> Tuple[List[Dict], str]:
         Tuple[List[Dict], str]: (書籍情報リスト, 抽出されたテキスト)
     """
     try:
-        # Vision APIクライアントを初期化
-        client = vision.ImageAnnotatorClient()
+        # Vision APIクライアントを取得
+        client = get_vision_client()
         
         # PIL Imageをバイトデータに変換
         img_byte_arr = io.BytesIO()
