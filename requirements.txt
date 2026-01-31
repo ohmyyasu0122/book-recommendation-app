@@ -1,8 +1,7 @@
 streamlit
 firebase-admin
-pytesseract
 Pillow
+opencv-python
+google-cloud-vision
 requests
 pandas
-python-dateutil
-python-dotenv

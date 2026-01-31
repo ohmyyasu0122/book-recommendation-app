@@ -1,3 +1,4 @@
+cat > app.py << 'EOF'
 import streamlit as st
 from datetime import datetime
 from PIL import Image
@@ -79,24 +80,40 @@ def main():
 def book_recording_page():
     """書籍記録ページ"""
     st.title("📖 書籍の記録")
-    st.markdown("表紙の写真をアップロードして、読んだ本を記録しましょう")
+    st.markdown("表紙の写真を撮影またはアップロードして、読んだ本を記録しましょう")
     
     col1, col2 = st.columns([1, 1])
     
     with col1:
         st.subheader("📸 書籍を追加")
         
-        # 画像アップロード
-        uploaded_file = st.file_uploader(
-            "表紙の写真をアップロード",
-            type=['jpg', 'jpeg', 'png'],
-            help="書籍の表紙を撮影してアップロードしてください"
+        # 撮影方法を選択
+        input_method = st.radio(
+            "入力方法を選択",
+            ["📷 カメラで撮影", "📁 ファイルをアップロード"],
+            horizontal=True
         )
         
-        if uploaded_file:
-            image = Image.open(uploaded_file)
-            st.image(image, caption="アップロードされた画像", use_container_width=True)
-            
+        image = None
+        
+        if input_method == "📷 カメラで撮影":
+            # カメラ入力
+            camera_photo = st.camera_input("書籍の表紙を撮影")
+            if camera_photo:
+                image = Image.open(camera_photo)
+                st.image(image, caption="撮影された画像", use_container_width=True)
+        else:
+            # ファイルアップロード
+            uploaded_file = st.file_uploader(
+                "表紙の写真をアップロード",
+                type=['jpg', 'jpeg', 'png'],
+                help="書籍の表紙を撮影してアップロードしてください"
+            )
+            if uploaded_file:
+                image = Image.open(uploaded_file)
+                st.image(image, caption="アップロードされた画像", use_container_width=True)
+        
+        if image:
             if st.button("書籍情報を取得", type="primary"):
                 with st.spinner("書籍情報を取得中..."):
                     books, extracted_text = recognize_book_from_image(image)
@@ -221,3 +238,4 @@ def recommendation_page():
 
 if __name__ == "__main__":
     main()
+EOF
