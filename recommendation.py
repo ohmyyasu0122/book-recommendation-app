@@ -3,9 +3,7 @@ from datetime import datetime
 from collections import Counter
 import random
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
 
 def get_user_favorite_genres(user_books, min_rating=4):
     """ユーザーの好みジャンルを特定"""

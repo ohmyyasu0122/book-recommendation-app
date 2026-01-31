@@ -5,3 +5,5 @@ opencv-python
 google-cloud-vision
 requests
 pandas
+python-dotenv
+python-dotenv
