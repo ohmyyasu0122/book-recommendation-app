@@ -6,70 +6,62 @@ from typing import Tuple, List, Dict
 import requests
 import streamlit as st
 import os
+import re
 
 def get_vision_client():
     """Vision APIクライアントを取得（Streamlit Cloud対応）"""
     try:
-        # Streamlit Cloudの場合
         if 'gcp_service_account' in st.secrets:
             credentials = service_account.Credentials.from_service_account_info(
                 st.secrets["gcp_service_account"]
             )
             return vision.ImageAnnotatorClient(credentials=credentials)
-        
-        # ローカル環境の場合
         elif os.environ.get('GOOGLE_APPLICATION_CREDENTIALS'):
             return vision.ImageAnnotatorClient()
-        
         else:
             raise Exception("Google Cloud認証情報が設定されていません")
-            
     except Exception as e:
         raise Exception(f"Vision APIクライアントの初期化に失敗: {str(e)}")
+
+def clean_text(text: str) -> str:
+    """テキストをクリーンアップ"""
+    # 英数字の誤認識を修正
+    text = re.sub(r'Masciate\s+un', 'Masquerade', text, flags=re.IGNORECASE)
+    # 出版社名などのノイズを除去
+    text = re.sub(r'集英社.*', '', text)
+    text = re.sub(r'文庫.*', '', text)
+    text = re.sub(r'新潮.*', '', text)
+    # 余分な空白を削除
+    text = ' '.join(text.split())
+    return text
 
 def recognize_book_from_image(image: Image.Image) -> Tuple[List[Dict], str]:
     """
     Google Cloud Vision APIを使用して画像から書籍情報を認識
-    
-    Args:
-        image: PIL Image object
-        
-    Returns:
-        Tuple[List[Dict], str]: (書籍情報リスト, 抽出されたテキスト)
     """
     try:
-        # Vision APIクライアントを取得
         client = get_vision_client()
         
-        # PIL Imageをバイトデータに変換
         img_byte_arr = io.BytesIO()
         image.save(img_byte_arr, format='PNG')
         img_byte_arr = img_byte_arr.getvalue()
         
-        # Vision API用のImageオブジェクトを作成
         vision_image = vision.Image(content=img_byte_arr)
-        
-        # テキスト検出を実行
         response = client.text_detection(image=vision_image)
         
-        # エラーチェック
         if response.error.message:
             raise Exception(f'Vision API Error: {response.error.message}')
         
-        # テキストを抽出
         texts = response.text_annotations
         
         if not texts:
             return [], "画像からテキストを検出できませんでした"
         
-        # 最初の要素に全体のテキストが含まれる
         extracted_text = texts[0].description
-        
-        # 改行を空白に置換してクリーンアップ
-        cleaned_text = ' '.join(extracted_text.split())
+        cleaned_text = clean_text(extracted_text)
         
         # 複数の検索クエリを生成
-        search_queries = generate_search_queries(cleaned_text)
+        search_queries = generate_search_queries(cleaned_text, extracted_text)
         
         # Google Books APIで検索
         books = []
@@ -80,7 +72,6 @@ def recognize_book_from_image(image: Image.Image) -> Tuple[List[Dict], str]:
                 if len(books) >= 5:
                     break
         
-        # 重複を除去
         unique_books = remove_duplicate_books(books)
         
         if unique_books:
@@ -91,45 +82,50 @@ def recognize_book_from_image(image: Image.Image) -> Tuple[List[Dict], str]:
     except Exception as e:
         return [], f"エラーが発生しました: {str(e)}"
 
-def generate_search_queries(text: str) -> List[str]:
+def generate_search_queries(cleaned_text: str, original_text: str) -> List[str]:
     """
     抽出されたテキストから複数の検索クエリを生成
-    
-    Args:
-        text: 抽出されたテキスト
-        
-    Returns:
-        List[str]: 検索クエリのリスト
     """
     queries = []
     
-    # 全体のテキスト
-    queries.append(text)
+    # 1. クリーンアップされたテキスト全体
+    queries.append(cleaned_text)
     
-    # 最初の50文字（タイトルの可能性が高い）
-    if len(text) > 10:
-        queries.append(text[:50])
+    # 2. 行ごとに分割
+    lines = original_text.split('\n')
     
-    # 行ごとに分割して最初の数行
-    lines = text.split('\n')
-    if len(lines) > 1:
-        # 最初の2行を結合
+    # 3. 著者名とタイトルを抽出（日本の著者名パターン）
+    author_pattern = r'([ぁ-ん一-龯]{2,4}[ぁ-ん一-龯]{2,4})'
+    authors = re.findall(author_pattern, original_text)
+    
+    # 4. カタカナのタイトルを抽出
+    title_pattern = r'([ァ-ヴー・]{3,})'
+    titles = re.findall(title_pattern, original_text)
+    
+    # 5. 著者名 + タイトルの組み合わせ
+    if authors and titles:
+        for author in authors[:2]:
+            for title in titles[:2]:
+                queries.append(f"{author} {title}")
+    
+    # 6. タイトルのみ
+    for title in titles[:3]:
+        queries.append(title)
+    
+    # 7. 最初の2行を結合
+    if len(lines) >= 2:
         queries.append(' '.join(lines[:2]))
-        # 最初の行のみ
+    
+    # 8. 最初の行のみ
+    if lines:
         queries.append(lines[0])
     
     # 重複を除去
-    return list(dict.fromkeys(queries))
+    return list(dict.fromkeys([q for q in queries if len(q.strip()) > 2]))
 
 def search_books_by_query(query: str) -> List[Dict]:
     """
     Google Books APIで書籍を検索
-    
-    Args:
-        query: 検索クエリ
-        
-    Returns:
-        List[Dict]: 書籍情報のリスト
     """
     try:
         url = "https://www.googleapis.com/books/v1/volumes"
@@ -168,12 +164,6 @@ def search_books_by_query(query: str) -> List[Dict]:
 def remove_duplicate_books(books: List[Dict]) -> List[Dict]:
     """
     重複する書籍を除去
-    
-    Args:
-        books: 書籍情報のリスト
-        
-    Returns:
-        List[Dict]: 重複を除去した書籍情報のリスト
     """
     unique_books = []
     seen_titles = set()
