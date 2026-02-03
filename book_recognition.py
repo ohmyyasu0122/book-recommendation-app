@@ -53,6 +53,7 @@ def search_rakuten_books(isbn: str) -> List[Dict]:
         params = {
             'applicationId': app_id,
             'isbn': isbn,
+                'booksGenreId': item.get('booksGenreId', ''),
             'format': 'json',
             'hits': 1,
         }
@@ -73,6 +74,7 @@ def search_rakuten_books(isbn: str) -> List[Dict]:
                 'average_rating': item.get('reviewAverage', 0),
                 'published_date': item.get('salesDate', '不明'),
                 'isbn': isbn,
+                'booksGenreId': item.get('booksGenreId', ''),
             })
         if books:
             st.success("📚 楽天書籍APIから書籍情報を取得しました")
