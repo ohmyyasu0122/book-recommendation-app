@@ -58,13 +58,26 @@ def resolve_genre_name(books_genre_id: str) -> str:
     if not books_genre_id:
         return '未分類'
     codes = books_genre_id.split('/')
-    for code in reversed(codes):
+    specific = []  # 001004xxx（小説サブカテゴリ）
+    general = []   # その他カテゴリ
+    for code in codes:
+        matched = None
         if code in RAKUTEN_GENRE_MAP:
-            return RAKUTEN_GENRE_MAP[code]
-        if len(code) > 6:
+            matched = RAKUTEN_GENRE_MAP[code]
+        elif len(code) > 9:
             prefix = code[:9]
             if prefix in RAKUTEN_GENRE_MAP:
-                return RAKUTEN_GENRE_MAP[prefix]
+                matched = RAKUTEN_GENRE_MAP[prefix]
+        if matched:
+            if code.startswith('001004') and matched not in specific:
+                specific.append(matched)
+            elif not code.startswith('001004') and matched not in general:
+                general.append(matched)
+    # 小説サブカテゴリを優先
+    if specific:
+        return specific[0]
+    if general:
+        return general[0]
     return 'その他'
 
 def get_vision_client():
