@@ -8,6 +8,65 @@ import streamlit as st
 import os
 import re
 
+# 楽天ブックスジャンルコード→名前マッピング
+RAKUTEN_GENRE_MAP = {
+    '001004008': '日本の小説',
+    '001004009': '外国の小説',
+    '001004001': 'ミステリー・サスペンス',
+    '001004002': 'SF・ホラー',
+    '001004003': 'エッセイ',
+    '001004004': 'ノンフィクション',
+    '001004016': 'ロマンス',
+    '001004015': 'その他',
+    '001017005': '少年',
+    '001017006': '少女',
+    '001019001': '小説・エッセイ',
+    '001019002': '美容・暮らし・健康・料理',
+    '001019003': 'ホビー・スポーツ・美術',
+    '001019005': '語学・学習参考書',
+    '001019006': '旅行・留学・アウトドア',
+    '001019007': '人文・思想・社会',
+    '001019008': 'ビジネス・経済・就職',
+    '001019009': 'パソコン・システム開発',
+    '001019010': '科学・医学・技術',
+    '001019011': '漫画（コミック）',
+    '001019012': 'ライトノベル',
+    '001019013': 'エンタメ',
+    '001019014': '写真集・タレント',
+    '001020001': '小説・エッセイ',
+    '001020002': '美容・暮らし・健康・料理',
+    '001020003': 'ホビー・スポーツ・美術',
+    '001020004': '絵本・児童書・図鑑',
+    '001020007': '人文・思想・社会',
+    '001020008': 'ビジネス・経済・就職',
+    '001020010': '科学・医学・技術',
+    '001020011': 'エンタメ',
+    '001010001': '恋愛',
+    '001010002': '妊娠・出産・子育て',
+    '001010003': 'ペット',
+    '001010010': '健康',
+    '001010011': '料理',
+    '001010013': '生き方・リラクゼーション',
+    '001010014': 'ファッション・美容',
+    '001021001': '小説',
+    '001021002': 'コミック',
+    '001029001': '小説',
+    '001029002': 'コミック',
+}
+
+def resolve_genre_name(books_genre_id: str) -> str:
+    if not books_genre_id:
+        return '未分類'
+    codes = books_genre_id.split('/')
+    for code in reversed(codes):
+        if code in RAKUTEN_GENRE_MAP:
+            return RAKUTEN_GENRE_MAP[code]
+        if len(code) > 6:
+            prefix = code[:9]
+            if prefix in RAKUTEN_GENRE_MAP:
+                return RAKUTEN_GENRE_MAP[prefix]
+    return 'その他'
+
 def get_vision_client():
     try:
         if 'gcp_service_account' in st.secrets:
@@ -67,7 +126,7 @@ def search_rakuten_books(isbn: str) -> List[Dict]:
             books.append({
                 'title': item.get('title', '不明'),
                 'authors': [item.get('author', '不明')],
-                'categories': ['未分類'],
+                'categories': [resolve_genre_name(item.get('booksGenreId', ''))],
                 'cover_image': item.get('mediumImageUrl', ''),
                 'description': item.get('itemCaption', '') or '説明なし',
                 'average_rating': item.get('reviewAverage', 0),
