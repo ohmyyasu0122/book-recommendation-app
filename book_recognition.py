@@ -55,7 +55,6 @@ def search_rakuten_books(isbn: str) -> List[Dict]:
             'applicationId': app_id,
             'isbn': isbn,
             'format': 'json',
-            'formatVersion': 2,
             'hits': 1,
         }
         response = requests.get(url, params=params, timeout=10)
