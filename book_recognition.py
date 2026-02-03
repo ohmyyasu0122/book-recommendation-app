@@ -76,6 +76,7 @@ def search_rakuten_books(isbn: str) -> List[Dict]:
                 'published_date': item.get('salesDate', '不明'),
                 'isbn': isbn,
             })
+        st.info(f'DEBUG: {books}')
         if books:
             st.success("📚 楽天書籍APIから書籍情報を取得しました")
         else:
@@ -106,7 +107,8 @@ def recognize_book_from_image(image: Image.Image) -> Tuple[List[Dict], str]:
         if isbn:
             st.success(f"📚 ISBN検出: {isbn}")
             books = search_by_isbn(isbn)
-            if books:
+            st.info(f'DEBUG: {books}')
+        if books:
                 return books, f"ISBN: {isbn}\n\n{extracted_text}"
             else:
                 return [], f"ISBNで書籍が見つかりませんでした。\n\nISBN: {isbn}\n\n抽出テキスト:\n{extracted_text[:200]}..."
