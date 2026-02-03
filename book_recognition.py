@@ -44,7 +44,7 @@ def get_rakuten_app_id():
     return None
 
 def search_rakuten_books(isbn: str) -> List[Dict]:
-    app_id = ' e6c8bb753f3ba6abef7d90280dc146fe7dde73b7'  # temporary hardcode
+    app_id = 'e6c8bb753f3ba6abef7d90280dc146fe7dde73b7'  # temporary hardcode
     st.info(f'KEY: [{str(app_id)[:3]}...{str(app_id)[-3:]}] len={len(str(app_id))}')
     if not app_id:
         st.warning("⚠️ RAKUTEN_APP_ID が設定されていません")
