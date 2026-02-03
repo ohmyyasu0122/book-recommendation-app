@@ -49,29 +49,29 @@ def search_rakuten_books(isbn: str) -> List[Dict]:
         st.warning("⚠️ RAKUTEN_APP_ID が設定されていません")
         return []
     try:
-        url = "https://api.rakuten.com/rakuten-api/v1/books/books"
+        url = "https://app.rakuten.co.jp/services/api/BooksBook/Search/20170404"
         params = {
-            'appid': app_id,
+            'applicationId': app_id,
             'isbn': isbn,
             'format': 'json',
+            'formatVersion': 2,
             'hits': 1,
         }
         response = requests.get(url, params=params, timeout=10)
         if response.status_code != 200:
-            st.warning(f"⚠️ 楽天書籍API エラー ({response.status_code})")
+            st.warning(f"⚠️ 楽天書籍API エラー ({response.status_code}): {response.text[:200]}")
             return []
         data = response.json()
         books = []
-        for book_item in data.get('books', []):
-            item = book_item.get('Item', {})
+        for item in data.get('Items', []):
             books.append({
                 'title': item.get('title', '不明'),
                 'authors': [item.get('author', '不明')],
                 'categories': ['未分類'],
-                'cover_image': item.get('coverImageUrl', ''),
-                'description': item.get('comment', '') or '説明なし',
-                'average_rating': item.get('commentAvg', 0),
-                'published_date': item.get('publishedDate', '不明'),
+                'cover_image': item.get('mediumImageUrl', ''),
+                'description': item.get('itemCaption', '') or '説明なし',
+                'average_rating': item.get('reviewAverage', 0),
+                'published_date': item.get('salesDate', '不明'),
                 'isbn': isbn,
             })
         if books:

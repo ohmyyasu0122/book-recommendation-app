@@ -48,25 +48,25 @@ def recommend_books(user_books, count=3):
     search_query, reason_base = build_search_query(user_books)
     read_titles = {book.get('title', '').lower() for book in user_books}
     try:
-        url = "https://api.rakuten.com/rakuten-api/v1/books/books"
+        url = "https://app.rakuten.co.jp/services/api/BooksBook/Search/20170404"
         params = {
-            'appid': app_id,
+            'applicationId': app_id,
             'keyword': search_query,
             'format': 'json',
-            'hits': 20,
+            'formatVersion': 2,
+            'hits': 30,
         }
         response = requests.get(url, params=params, timeout=10)
         if response.status_code != 200:
-            st.warning(f"⚠️ 楽天書籍API エラー ({response.status_code})")
+            st.warning(f"⚠️ 楽天書籍API エラー ({response.status_code}): {response.text[:200]}")
             return []
         data = response.json()
         recommendations = []
-        for book_item in data.get('books', []):
-            item = book_item.get('Item', {})
+        for item in data.get('Items', []):
             title = item.get('title', '')
             if not title or title.lower() in read_titles:
                 continue
-            description = item.get('comment', '') or '説明なし'
+            description = item.get('itemCaption', '') or '説明なし'
             if len(description) > 200:
                 description = description[:200] + '...'
             recommendations.append({
@@ -74,8 +74,8 @@ def recommend_books(user_books, count=3):
                 'authors': [item.get('author', '不明')],
                 'description': description,
                 'categories': ['未分類'],
-                'cover_image': item.get('coverImageUrl', ''),
-                'average_rating': item.get('commentAvg', 0),
+                'cover_image': item.get('mediumImageUrl', ''),
+                'average_rating': item.get('reviewAverage', 0),
                 'reason': reason_base,
             })
             if len(recommendations) >= count:
