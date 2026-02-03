@@ -62,7 +62,8 @@ def recommend_books(user_books, count=3):
             return []
         data = response.json()
         recommendations = []
-        for item in data.get('Items', []):
+        for book_item in data.get('Items', []):
+            item = book_item.get('Item', {})
             title = item.get('title', '')
             if not title or title.lower() in read_titles:
                 continue

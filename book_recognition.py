@@ -64,7 +64,8 @@ def search_rakuten_books(isbn: str) -> List[Dict]:
             return []
         data = response.json()
         books = []
-        for item in data.get('Items', []):
+        for book_item in data.get('Items', []):
+            item = book_item.get('Item', {})
             books.append({
                 'title': item.get('title', '不明'),
                 'authors': [item.get('author', '不明')],
