@@ -45,6 +45,7 @@ def get_rakuten_app_id():
 
 def search_rakuten_books(isbn: str) -> List[Dict]:
     app_id = get_rakuten_app_id()
+    st.info(f'KEY: [{str(app_id)[:3]}...{str(app_id)[-3:]}] len={len(str(app_id))}')
     if not app_id:
         st.warning("⚠️ RAKUTEN_APP_ID が設定されていません")
         return []
