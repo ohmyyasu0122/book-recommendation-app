@@ -145,7 +145,8 @@ def book_recording_page():
                                             'description': book['description'],
                                             'completed_date': datetime.now()
                                         }
-                                        save_book(st.session_state['user_id'], book_data)
+                                        st.info(f"DEBUG: Saving book. user_id={st.session_state.get('user_id')}, title={book_data.get('title')}")
+                save_book(st.session_state['user_id'], book_data)
                                         st.success(f"「{book['title']}」を記録しました!")
                                         st.rerun()
                     else:
