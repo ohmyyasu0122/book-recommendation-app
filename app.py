@@ -190,7 +190,7 @@ def book_recording_page():
                             key=f"rating_{book['id']}"
                         )
                         
-                        if rating != book.get('rating', 0):
+                        if rating != book.get('rating', 3):
                             update_book_rating(st.session_state['user_id'], book['id'], rating)
                             st.success("評価を更新しました!")
                     
