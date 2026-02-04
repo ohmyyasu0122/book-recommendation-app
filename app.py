@@ -116,40 +116,49 @@ def book_recording_page():
             if st.button("書籍情報を取得", type="primary"):
                 with st.spinner("書籍情報を取得中..."):
                     books, extracted_text = recognize_book_from_image(image)
-                    
-                    if books:
-                        st.success("書籍が見つかりました!")
-                        st.info(f"抽出されたテキスト: {extracted_text}")
+                    st.session_state["books"] = books
+                    st.session_state["extracted_text"] = extracted_text
+            
+            # session_state から取得して表示
+            if "books" in st.session_state and st.session_state["books"]:
+                books = st.session_state["books"]
+                extracted_text = st.session_state.get("extracted_text", "")
+                
+                st.success("書籍が見つかりました!")
+                st.info(f"抽出されたテキスト: {extracted_text}")
+                
+                # 候補を表示
+                st.subheader("候補から選択してください")
+                for idx, book in enumerate(books):
+                    with st.expander(f"{idx+1}. {book['title']} - {', '.join(book['authors'])}"):
+                        col_a, col_b = st.columns([1, 2])
                         
-                        # 候補を表示
-                        st.subheader("候補から選択してください")
-                        for idx, book in enumerate(books):
-                            with st.expander(f"{idx+1}. {book['title']} - {', '.join(book['authors'])}"):
-                                col_a, col_b = st.columns([1, 2])
-                                
-                                with col_a:
-                                    if book['cover_image']:
-                                        st.image(book['cover_image'])
-                                
-                                with col_b:
-                                    st.write(f"**著者:** {', '.join(book['authors'])}")
-                                    st.write(f"**ジャンル:** {', '.join(book['categories'])}")
-                                    st.write(f"**説明:** {book['description'][:100]}...")
-                                    
-                                    if st.button(f"この本を記録", key=f"save_{idx}"):
-                                        book_data = {
-                                            'title': book['title'],
-                                            'authors': book['authors'],
-                                            'categories': book['categories'],
-                                            'cover_image': book['cover_image'],
-                                        'description': book['description'],
-                                        'completed_date': datetime.now()
-                                        }
-                                        save_book(st.session_state["user_id"], book_data)
-                                        st.success(f"「{book['title']}」を記録しました!")
-                                        st.rerun()
-                    else:
-                        st.error(extracted_text)
+                        with col_a:
+                            if book['cover_image']:
+                                st.image(book['cover_image'])
+                        
+                        with col_b:
+                            st.write(f"**著者:** {', '.join(book['authors'])}")
+                            st.write(f"**ジャンル:** {', '.join(book['categories'])}")
+                            st.write(f"**説明:** {book['description'][:100]}...")
+                            
+                            if st.button(f"この本を記録", key=f"save_{idx}"):
+                                book_data = {
+                                    'title': book['title'],
+                                    'authors': book['authors'],
+                                    'categories': book['categories'],
+                                    'cover_image': book['cover_image'],
+                                    'description': book['description'],
+                                    'completed_date': datetime.now()
+                                }
+                                save_book(st.session_state['user_id'], book_data)
+                                del st.session_state['books']
+                                del st.session_state['extracted_text']
+                                st.success(f"「{book['title']}」を記録しました!")
+                                st.rerun()
+
+            elif "extracted_text" in st.session_state and not st.session_state.get("books"):
+                st.error(st.session_state["extracted_text"])
     
     with col2:
         st.subheader("📚 読書履歴")
