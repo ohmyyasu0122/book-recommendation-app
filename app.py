@@ -186,7 +186,7 @@ def book_recording_page():
                         rating = st.select_slider(
                             "評価",
                             options=[1, 2, 3, 4, 5],
-                            value=book.get('rating', 3),
+                            value=book.get('rating') or 3,
                             key=f"rating_{book['id']}"
                         )
                         
