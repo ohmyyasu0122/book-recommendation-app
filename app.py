@@ -142,15 +142,14 @@ def book_recording_page():
                                             'authors': book['authors'],
                                             'categories': book['categories'],
                                             'cover_image': book['cover_image'],
-                                            'description': book['description'],
-                                            'completed_date': datetime.now()
+                                        'description': book['description'],
+                                        'completed_date': datetime.now()
                                         }
-                st.info(f"DEBUG: Saving book. user_id={st.session_state.get('user_id')}, title={book_data.get('title')}")
-                save_book(st.session_state['user_id'], book_data)
-                st.success(f"「{book['title']}」を記録しました!")
-                st.rerun()
-        else:
-            st.error(extracted_text)
+                                        save_book(st.session_state["user_id"], book_data)
+                                        st.success(f"「{book['title']}」を記録しました!")
+                                        st.rerun()
+                    else:
+                        st.error(extracted_text)
     
     with col2:
         st.subheader("📚 読書履歴")
