@@ -149,8 +149,8 @@ def book_recording_page():
                 save_book(st.session_state['user_id'], book_data)
                 st.success(f"「{book['title']}」を記録しました!")
                 st.rerun()
-                    else:
-                        st.error(extracted_text)
+        else:
+            st.error(extracted_text)
     
     with col2:
         st.subheader("📚 読書履歴")
