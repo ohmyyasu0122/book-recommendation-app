@@ -120,7 +120,7 @@ def recommend_books(user_books, count=3):
             'applicationId': app_id,
             'keyword': keyword,
             'format': 'json',
-            'hits': 50,
+            'hits': 30,
         }
         if top_genre_id:
             params['booksGenreId'] = top_genre_id
