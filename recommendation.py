@@ -133,13 +133,20 @@ def is_valid_book(item):
     
     # 明らかに書籍以外のキーワード
     exclude_keywords = [
-        'photobook', 'photo book', 'photo-book',
-        'figure', 'figuarts', 'figma', 'ねんどろいど',
-        'goods', 'グッズ',
-        'dvd', 'blu-ray', 'cd',
-        'calendar', 'カレンダー',
-        'poster', 'ポスター'
-    ]
+    'photobook', 'photo book', 'photo-book',
+    'figure', 'figuarts', 'figma', 'nendoroid',
+    'goods', 'calendar', 'poster', 'notebook',
+    'dvd', 'blu-ray', 'cd', 'box', 'set',
+    # 日本語
+    '写真集', 'フォトブック', 'フォト',
+    'レターセット', '便箋セット',
+    'ノート', '手帳',
+    'カレンダー', 'ポスター',
+    'グッズ', 'フィギュア', 'ねんどろいど',
+    'ムック', '雑誌', '月刊', '週刊',
+    'DVD付', 'CD付', 'Blu-ray付',
+    '限定版', '特装版', '初回限定', '特典付'
+]
     
     if any(keyword in title_lower for keyword in exclude_keywords):
         return False
