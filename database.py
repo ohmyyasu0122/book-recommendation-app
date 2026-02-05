@@ -27,7 +27,9 @@ def save_book(user_id, book_data):
     book_ref = db.collection('users').document(user_id).collection('books').document()
     
     book_data['created_at'] = datetime.now()
-    book_data['rating'] = book_data.get('rating', 0)
+    # ratingを明示的に整数に変換
+    rating = book_data.get('rating', 0)
+    book_data['rating'] = int(rating) if rating else 0
     
     book_ref.set(book_data)
     return book_ref.id
@@ -42,6 +44,14 @@ def get_user_books(user_id):
     for book in books:
         book_data = book.to_dict()
         book_data['id'] = book.id
+        
+        # ratingを明示的に整数に変換（文字列で保存されている場合に対応）
+        if 'rating' in book_data:
+            try:
+                book_data['rating'] = int(book_data['rating'])
+            except (ValueError, TypeError):
+                book_data['rating'] = 0
+        
         book_list.append(book_data)
     
     return book_list
@@ -50,12 +60,29 @@ def update_book_rating(user_id, book_id, rating):
     """書籍の評価を更新"""
     db = initialize_firebase()
     book_ref = db.collection('users').document(user_id).collection('books').document(book_id)
-    book_ref.update({'rating': rating})
+    # ratingを明示的に整数に変換
+    try:
+        rating_int = int(rating)
+    except (ValueError, TypeError):
+        rating_int = 0
+    book_ref.update({'rating': rating_int})
 
 def get_highly_rated_books(user_id, min_rating=4):
     """高評価の書籍を取得"""
     db = initialize_firebase()
     books_ref = db.collection('users').document(user_id).collection('books')
-    books = books_ref.where('rating', '>=', min_rating).stream()
+    # min_ratingを明示的に整数に
+    books = books_ref.where('rating', '>=', int(min_rating)).stream()
     
-    return [book.to_dict() for book in books]
+    book_list = []
+    for book in books:
+        book_data = book.to_dict()
+        # ratingを明示的に整数に変換
+        if 'rating' in book_data:
+            try:
+                book_data['rating'] = int(book_data['rating'])
+            except (ValueError, TypeError):
+                book_data['rating'] = 0
+        book_list.append(book_data)
+    
+    return book_list

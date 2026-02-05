@@ -38,7 +38,16 @@ def get_top_genre_id(user_books):
 
 def extract_keywords_from_descriptions(user_books, min_rating=4):
     """高評価の本の説明文から頻度の高いキーワードを抽出"""
-    high_rated = [b for b in user_books if b.get('rating', 0) >= min_rating]
+    # ratingを安全に整数として比較
+    high_rated = []
+    for b in user_books:
+        try:
+            rating = b.get('rating', 0)
+            rating_int = int(rating) if rating else 0
+            if rating_int >= min_rating:
+                high_rated.append(b)
+        except (ValueError, TypeError):
+            continue
     if not high_rated:
         high_rated = user_books
     all_text = ' '.join(b.get('description', '') for b in high_rated)

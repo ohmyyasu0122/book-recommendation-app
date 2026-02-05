@@ -232,8 +232,15 @@ def recommendation_page():
                     st.markdown(f"**著者:** {', '.join(book['authors'])}")
                     st.markdown(f"**ジャンル:** {', '.join(book['categories'])}")
                     
-                    if book.get('average_rating', 0) > 0:
-                        st.markdown(f"⭐ 平均評価: {book['average_rating']}/5")
+                    # 修正: average_ratingの安全な処理
+                    avg_rating = book.get('average_rating')
+                    if avg_rating:
+                        try:
+                            avg_rating_float = float(avg_rating)
+                            if avg_rating_float > 0:
+                                st.markdown(f"⭐ 平均評価: {avg_rating_float}/5")
+                        except (ValueError, TypeError):
+                            pass
                     
                     st.markdown(f"**あらすじ:**")
                     st.write(book['description'])
